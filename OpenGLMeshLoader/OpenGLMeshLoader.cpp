@@ -248,36 +248,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glDisable(GL_TEXTURE_2D);
 }
    
-void drawResource(float x, float y, float z){
 
-		glColor3f(0.6, 0.6, 0.6);
-		GLUquadric *quadric;
-		quadric = gluNewQuadric();
-	//	gluQuadricNormals(quadric, GLU_SMOOTH);
-	//	gluQuadricTexture(quadric, GLU_TRUE);
-
-		//glBindTexture(GL_TEXTURE_2D, skyDown.texture[0]);
-		glPushMatrix();
-		glTranslated(x, y, z);
-		glRotated(180, 0, 1, 0);
-		gluCylinder(quadric, 0.1, 0.1, 0.1, 50, 50);
-		glPopMatrix();
-
-
-		glPushMatrix();
-		glTranslated(x, y, z);
-		glRotated(180, 0, 1, 0);
-		gluDisk(quadric, 0, 0.1, 50, 1);
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(x, y, z - 0.1);
-		glRotated(180, 0, 1, 0);
-		gluDisk(quadric, 0, 0.1, 50, 1);
-		glPopMatrix();
-
-		gluDeleteQuadric(quadric);
-}
 
 void setupLights() {
 	GLfloat ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -324,7 +295,7 @@ void setupCamera() {
 
 }
 void rotateCamera(){
-	cameraX = 80*sin(cangle);
+	cameraX = 120*sin(cangle);
 	cameraZ = 150*cos(cangle);
 	//cameraY = 100;
 }
@@ -358,6 +329,7 @@ void createScene(){
 				character.level = Levels[i-1];
 				//character.y = character.level.y + 5;
 				character.fall = true;
+				
 
 				//sound for falling
 			}	
@@ -375,20 +347,18 @@ void createScene(){
 			if (!Levels[i].counted){
 				++coins;
 				Levels[i].counted = true;
+				
+					PlaySound(NULL, 0, 0);
+					PlaySound(TEXT("sounds\\banana.wav"), NULL, SND_FILENAME | SND_ASYNC);
 			}
 		}
 	}
-	//if (character.x>character.level.xRight || character.x<character.level.xLeft) {
-		//character.level = *character.level.levelBefore;
-		//character.y = character.level.y + 5;
-		//character.fall = true;
-	//}
-
 }
 
 
 
 void Display() {
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
 	setupLights();
@@ -396,9 +366,7 @@ void Display() {
 	drawBanana(30,cameraY+90,0);
 
 
-	
-	//drawResource(30,cameraY+90,0);
-	if (coins >= 30) {
+	if (coins >= 5) {
 		win = true;
 		//sound for winning
 	}
@@ -434,10 +402,12 @@ void Display() {
 	///	result = name + numstr;
 	}
 	else {
-		if (lost)
-		displayText(-20, cameraY+100, 0, 1, 1, 1, "GAME OVER!");
-		else
-		displayText(-20, cameraY + 100, 0, 1, 1, 1, "YOU WON :)");
+		    if (lost)
+			displayText(-20, cameraY + 100, 0, 1, 1, 1, "GAME OVER!");
+		
+			if (win)
+				displayText(-20, cameraY + 100, 0, 1, 1, 1, "YOU WON :)");
+			
 	}
 	
 	glFlush();
@@ -466,6 +436,7 @@ void Mouse(int button, int state, int x, int y) {
 void key(unsigned char key, int x, int y) {
 	if (key == ' ' &(!character.fall||character.x>60 || character.x<-70)&&jumpVelocity<30) {
 		// sound for jumping
+		
 		character.angleOfLooking = 0;
 	    jump = true;
 		if (jumpVelocity < 35){
@@ -504,10 +475,13 @@ void key(unsigned char key, int x, int y) {
 		eyeY--;
 		cameraY--;
 	}
+	
 }
 
+
 void Timer(int value) {
-	if (lost)
+
+	if (lost | win)
 		return;
 	
 	for (int i = 0; i<10; i++) {
@@ -548,9 +522,23 @@ void Timer(int value) {
 	glutTimerFunc(10000, Timer, 0);
 }
 
-
+void Timer2(int value){
+	if (lost){
+		PlaySound(NULL, 0, 0);
+		PlaySound(TEXT("sounds\\lost.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		return;
+	}
+	if (win){
+		PlaySound(NULL, 0, 0);
+		PlaySound(TEXT("sounds\\win.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		return;
+	}
+	glutTimerFunc(1, Timer2, 0);
+}
 
 void Anim() {
+	if (lost | win)
+		return;
 	if (move) {
 		cameraY += cameraAcceleration;
 		eyeY += cameraAcceleration;
@@ -562,7 +550,7 @@ void Anim() {
 	}
 	if (cinematic){
 		if (cangle < 6.28)
-			cangle += 0.001;
+			cangle += 0.01;
 		else {
 			cangle = 0;
 			cinematic = false;
@@ -629,7 +617,7 @@ int main(int argc, char** argv) {
 	eyeY = 0;
 	eyeZ = 0;
 	lastLevel = 0;
-	cameraAcceleration = 0.05;
+	cameraAcceleration = 0.1;
 	timerTime = 2 * 1000;
 	lastLevel += ((rand() % 10) + 40);
 	jump = false;
@@ -657,6 +645,7 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(key);
 	glutMouseFunc(Mouse);
 	glutTimerFunc(0, Timer, 0);
+	glutTimerFunc(0, Timer2, 0);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	glEnable(GL_DEPTH_TEST);
