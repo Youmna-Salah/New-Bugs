@@ -96,7 +96,7 @@ class Level {
 public:
 	GLdouble x, y, xRight, xLeft, direction;
 	Level *levelBefore, *levelAfter;
-	bool drawB;
+	bool drawB,counted;
 	Level() {
 		this->x = 0;
 		this->y = 0;
@@ -106,6 +106,7 @@ public:
 		levelBefore = NULL;
 		levelAfter = NULL;
 		drawB = true;
+		counted = false;
 	}
 
 	Level(GLdouble x, GLdouble y, GLdouble direction) {
@@ -117,6 +118,7 @@ public:
 		levelBefore = NULL;
 		levelAfter = NULL;
 		drawB = true;
+		counted = false;
 	}
 	void drawLevel() {	
 		level.Use();
@@ -326,6 +328,7 @@ void rotateCamera(){
 	cameraZ = 150*cos(cangle);
 	//cameraY = 100;
 }
+
 void displayText(float x, float y, float z, int r, int g, int b, std::string string) {
 	long j = string.length();
 
@@ -346,7 +349,6 @@ void createScene(){
 				character.level = (Levels[i]);
 				character.y = Levels[i].y + 5;
 				jumpEndY = character.y;
-				coins++;
 			}
 		
 		}
@@ -367,14 +369,14 @@ void createScene(){
 		if (Levels[i].drawB){
 			drawBanana(Levels[i].direction - 2, Levels[i].y + 1, 35);
 		}
-		if (i == 1){
-			printf("banana: %f, i: %i \n", Levels[i].direction - 2, i);
-			printf("character: %f \n", character.x);
-		}
-
-
-		if ((int)Levels[i].direction - 2 == (int)character.x && (int)Levels[i].y == (int)character.y)
+		
+		if ((int)Levels[i].direction >= (int)character.x - 18 && (int)Levels[i].direction < (int)character.x - 10 && (int)Levels[i].y >= (int)character.y - 14 && (int)Levels[i].y < (int)character.y - 2){
 			Levels[i].drawB = false;
+			if (!Levels[i].counted){
+				++coins;
+				Levels[i].counted = true;
+			}
+		}
 	}
 	//if (character.x>character.level.xRight || character.x<character.level.xLeft) {
 		//character.level = *character.level.levelBefore;
@@ -396,7 +398,7 @@ void Display() {
 
 	
 	//drawResource(30,cameraY+90,0);
-	if (coins >= 1000) {
+	if (coins >= 30) {
 		win = true;
 		//sound for winning
 	}
